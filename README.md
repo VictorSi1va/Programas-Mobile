@@ -9,14 +9,23 @@ Este é um portfólio de projetos de desenvolvimento mobile criados durante o me
 * **Expo**: Ferramenta e ecossistema para criar aplicativos React Native de forma rápida.
 
 ## ▶️ Como Rodar os Projetos
-Para executar qualquer projeto deste repositório, navegue até a pasta do projeto desejado no seu terminal e siga os passos:
+Para executar qualquer projeto deste repositório, siga estes passos no seu terminal:
 
-1.  Instale as dependências:
+1.  **Acesse a pasta do projeto.** Use o comando `cd` para entrar no diretório da atividade que você quer rodar.
+    
+    Por exemplo, para o projeto de cadastro de usuário:
+    ```bash
+    cd CadastroUsuario/081210012-CadUser
+    ```
+
+2.  **Instale as dependências.** Este comando baixa todos os pacotes necessários para o projeto funcionar.
     ```bash
     npm install
     ```
 
-2.  Inicie o servidor de desenvolvimento:
+3.  **Inicie o servidor de desenvolvimento.**
     ```bash
     npx expo start
     ```
+
+Após seguir esses passos, o Expo Go irá carregar o aplicativo no seu dispositivo ou emulador.
