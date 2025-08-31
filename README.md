@@ -20,6 +20,3 @@ Para executar qualquer projeto deste repositório, navegue até a pasta do proje
     ```bash
     npx expo start
     ```
-
-## 📸 Prévia
-*Coloque aqui uma imagem ou GIF do projeto em funcionamento.*
