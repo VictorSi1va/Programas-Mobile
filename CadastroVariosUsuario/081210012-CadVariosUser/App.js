@@ -13,7 +13,7 @@ export default function App() {
   // Armazena a lista completa de usuários.
   const [listaUsuarios, setListaUsuarios] = useState([]);
   // Armazena o usuário que está sendo editado, se houver.
-  const [usuarioEmEdicao, setUsuarioEmEdicao] = useState(null);
+  const [usuarioEmEdicao, setUsuarioEmEdicao] = useState(null); 
 
   // === Funções de Persistência (AsyncStorage) ===
   useEffect(() => {
