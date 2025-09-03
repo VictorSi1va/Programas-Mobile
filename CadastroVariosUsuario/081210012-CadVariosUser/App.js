@@ -6,7 +6,7 @@ export default function App() {
   // === Gerenciamento de Estado ===
   const [codigo, setCodigo] = useState('');
   const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(''); 
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   
