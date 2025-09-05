@@ -1,228 +1,295 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import {
+  Alert, Text, TextInput, TouchableOpacity,
+  View, Keyboard, ScrollView, StyleSheet, SafeAreaView
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
+import { Ionicons, Entypo, FontAwesome } from '@expo/vector-icons';
+
+// Funções para gerar um ID único.
+const generateId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+};
 
 export default function App() {
-  // === Gerenciamento de Estado ===
-  const [codigo, setCodigo] = useState('');
+  const [id, setId] = useState(null);
   const [nome, setNome] = useState('');
-  const [email, setEmail] = useState(''); 
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
-  
-  // Armazena a lista completa de usuários.
-  const [listaUsuarios, setListaUsuarios] = useState([]);
-  // Armazena o usuário que está sendo editado, se houver.
-  const [usuarioEmEdicao, setUsuarioEmEdicao] = useState(null); 
 
-  // === Funções de Persistência (AsyncStorage) ===
+  const [listaUsuarios, setListaUsuarios] = useState([]);
+
   useEffect(() => {
     carregarUsuarios();
   }, []);
 
+  // === Funções de Persistência (AsyncStorage) ===
   const salvarUsuarios = async (usuarios) => {
     try {
-      await AsyncStorage.setItem('lista_usuarios', JSON.stringify(usuarios));
-    } catch (error) {
-      console.error('Erro ao salvar os usuários:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao salvar os dados.');
+      await AsyncStorage.setItem('@usuarios', JSON.stringify(usuarios));
+      setListaUsuarios(usuarios);
+    } catch (e) {
+      Alert.alert('Erro ao salvar os usuários!');
     }
   };
 
   const carregarUsuarios = async () => {
     try {
-      const usuariosSalvos = await AsyncStorage.getItem('lista_usuarios');
-      if (usuariosSalvos !== null) {
-        setListaUsuarios(JSON.parse(usuariosSalvos));
+      const jsonValue = await AsyncStorage.getItem('@usuarios');
+      if (jsonValue != null) {
+        setListaUsuarios(JSON.parse(jsonValue));
+      } else {
+        setListaUsuarios([]);
       }
-    } catch (error) {
-      console.error('Erro ao carregar os usuários:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao carregar os dados.');
+    } catch (e) {
+      Alert.alert('Erro ao carregar os usuários!');
     }
   };
 
   // === Funções de Validação ===
   const validarCampos = () => {
-    if (isNaN(codigo) || parseFloat(codigo) <= 0) {
-      Alert.alert('Erro', 'O código deve ser um número maior que zero.');
-      return false;
-    }
     if (nome.trim() === '') {
-      Alert.alert('Erro', 'O nome é obrigatório.');
+      Alert.alert('Erro de Validação', 'O nome é obrigatório.');
       return false;
     }
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!regexEmail.test(email)) {
-      Alert.alert('Erro', 'Por favor, insira um e-mail válido.');
+      Alert.alert('Erro de Validação', 'Por favor, insira um e-mail válido.');
       return false;
     }
     if (senha !== confirmarSenha) {
-      Alert.alert('Erro', 'A senha e a confirmação de senha devem ser iguais.');
+      Alert.alert('Erro de Validação', 'A senha e a confirmação de senha devem ser iguais.');
       return false;
     }
     const regexSenha = /^(?=.*[A-Z])(?=.*\d).{5,}$/;
     if (!regexSenha.test(senha)) {
-      Alert.alert('Erro', 'A senha deve ter no mínimo 5 dígitos, 1 letra maiúscula e 1 número.');
+      Alert.alert('Erro de Validação', 'A senha deve ter no mínimo 5 dígitos, 1 letra maiúscula e 1 número.');
       return false;
     }
     return true;
   };
 
   // === Funções de Manipulação do CRUD ===
-  const limparFormulario = () => {
-    setCodigo('');
+  const limparCampos = () => {
+    setId(null);
     setNome('');
     setEmail('');
     setSenha('');
     setConfirmarSenha('');
-    setUsuarioEmEdicao(null); // Sai do modo de edição
+    Keyboard.dismiss();
   };
 
-  const incluirUsuario = () => {
+  const salvarDados = () => {
     if (!validarCampos()) return;
-    const novoUsuario = { codigo, nome, email, senha };
-    const novaLista = [...listaUsuarios, novoUsuario];
-    setListaUsuarios(novaLista);
+    
+    let novoRegistro = (id === null);
+
+    const objUsuario = {
+      id: novoRegistro ? generateId() : id,
+      nome: nome,
+      email: email,
+      senha: senha,
+    };
+
+    let novaLista = [...listaUsuarios];
+    if (novoRegistro) {
+      novaLista.push(objUsuario);
+    } else {
+      let index = novaLista.findIndex(u => u.id === id);
+      if (index >= 0) {
+        novaLista[index] = objUsuario;
+      }
+    }
+    
     salvarUsuarios(novaLista);
-    limparFormulario();
-    Alert.alert('Sucesso', 'Usuário cadastrado com sucesso!');
+    limparCampos();
+    Alert.alert('Sucesso', `Usuário ${novoRegistro ? 'incluído' : 'editado'} com sucesso!`);
   };
 
-  const editarUsuario = (usuario) => {
-    setCodigo(usuario.codigo);
-    setNome(usuario.nome);
-    setEmail(usuario.email);
-    setSenha(usuario.senha);
-    setConfirmarSenha(usuario.senha);
-    setUsuarioEmEdicao(usuario); // Entra no modo de edição
+  const editar = (identificador) => {
+    const usuario = listaUsuarios.find(u => u.id === identificador);
+    if (usuario) {
+      setId(usuario.id);
+      setNome(usuario.nome);
+      setEmail(usuario.email);
+      setSenha(usuario.senha);
+      setConfirmarSenha(usuario.senha);
+    }
+    Keyboard.dismiss();
   };
 
-  const salvarEdicao = () => {
-    if (!validarCampos()) return;
-    const novaLista = listaUsuarios.map(u => 
-      u.codigo === usuarioEmEdicao.codigo ? { ...u, nome, email, senha } : u
-    );
-    setListaUsuarios(novaLista);
-    salvarUsuarios(novaLista);
-    limparFormulario();
-    Alert.alert('Sucesso', 'Usuário atualizado com sucesso!');
-  };
-
-  const excluirUsuario = (usuarioParaExcluir) => {
-    Alert.alert(
-      'Confirmação',
-      `Tem certeza que deseja excluir o usuário ${usuarioParaExcluir.nome}?`,
+  const removerUsuario = (identificador) => {
+    Alert.alert('Atenção', 'Confirma a remoção do usuário?',
       [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'OK',
-          onPress: () => {
-            const novaLista = listaUsuarios.filter(u => u.codigo !== usuarioParaExcluir.codigo);
-            setListaUsuarios(novaLista);
-            salvarUsuarios(novaLista);
-            Alert.alert('Sucesso', 'Usuário excluído com sucesso!');
-          },
+        { text: 'Sim', onPress: async () => {
+            try {
+              const novaLista = listaUsuarios.filter(u => u.id !== identificador);
+              await salvarUsuarios(novaLista);
+              limparCampos();
+              Alert.alert('Sucesso', 'Usuário removido!');
+            } catch (e) {
+              Alert.alert('Erro', e.toString());
+            }
+          }
         },
+        { text: 'Não', style: 'cancel' }
       ]
     );
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.listItem}>
-      <View>
-        <Text style={styles.itemText}>Nome: {item.nome}</Text>
-        <Text style={styles.itemText}>Email: {item.email}</Text>
+  const apagarTudo = async () => {
+    Alert.alert('Muita atenção!', 'Confirma a exclusão de todos os usuários?',
+      [
+        { text: 'Sim, confirmo!', onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('@usuarios');
+              setListaUsuarios([]);
+              Alert.alert('Sucesso', 'Registros removidos!');
+            } catch (e) {
+              Alert.alert('Erro', e.toString());
+            }
+          }
+        },
+        { text: 'Não!', style: 'cancel' }
+      ]
+    );
+  };
+
+  const renderUsuario = (usuario) => (
+    <View key={usuario.id} style={styles.listItem}>
+      <View style={styles.usuarioInfo}>
+        <Text style={styles.itemText}>Nome: {usuario.nome}</Text>
+        <Text style={styles.itemText}>Email: {usuario.email}</Text>
       </View>
       <View style={styles.itemButtons}>
-        <TouchableOpacity style={[styles.itemButton, styles.editButton]} onPress={() => editarUsuario(item)}>
-          <Text style={styles.buttonText}>Editar</Text>
+        <TouchableOpacity onPress={() => editar(usuario.id)}>
+          <Entypo name="edit" size={32} color="black" style={{marginRight: 15}}/>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.itemButton, styles.deleteButton]} onPress={() => excluirUsuario(item)}>
-          <Text style={styles.buttonText}>Excluir</Text>
+        <TouchableOpacity onPress={() => removerUsuario(usuario.id)}>
+          <FontAwesome name="remove" size={32} color="red" />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Cadastro de Usuários</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Cadastro de Usuários</Text>
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nome</Text>
+              <View style={styles.inputWithIcon}>
+                <Ionicons name="person" size={24} color="gray" style={styles.icon} />
+                <TextInput style={styles.input} onChangeText={setNome} value={nome} placeholder="Nome do usuário" />
+              </View>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWithIcon}>
+                <Ionicons name="mail" size={24} color="gray" style={styles.icon} />
+                <TextInput style={styles.input} onChangeText={setEmail} value={email} keyboardType="email-address" placeholder="seuemail@exemplo.com" />
+              </View>
+            </View>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.label}>Código</Text>
-        <TextInput style={styles.input} value={codigo} onChangeText={setCodigo} keyboardType="numeric" editable={!usuarioEmEdicao} />
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Senha</Text>
+              <View style={styles.inputWithIcon}>
+                <Ionicons name="lock-closed" size={24} color="gray" style={styles.icon} />
+                <TextInput style={styles.input} onChangeText={setSenha} value={senha} secureTextEntry={true} placeholder="Sua senha" />
+              </View>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Confirmar Senha</Text>
+              <View style={styles.inputWithIcon}>
+                <Ionicons name="lock-closed" size={24} color="gray" style={styles.icon} />
+                <TextInput style={styles.input} onChangeText={setConfirmarSenha} value={confirmarSenha} secureTextEntry={true} placeholder="Confirme sua senha" />
+              </View>
+            </View>
+          </View>
 
-        <Text style={styles.label}>Nome</Text>
-        <TextInput style={styles.input} value={nome} onChangeText={setNome} />
-
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" />
-
-        <Text style={styles.label}>Senha</Text>
-        <TextInput style={styles.input} value={senha} onChangeText={setSenha} secureTextEntry={true} />
-
-        <Text style={styles.label}>Confirmar Senha</Text>
-        <TextInput style={styles.input} value={confirmarSenha} onChangeText={setConfirmarSenha} secureTextEntry={true} />
-
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.button} onPress={usuarioEmEdicao ? salvarEdicao : incluirUsuario}>
-            <Text style={styles.buttonText}>{usuarioEmEdicao ? 'Salvar Edição' : 'Incluir'}</Text>
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={salvarDados}>
+              <Text style={styles.buttonText}>{id ? 'Salvar Edição' : 'Incluir'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={limparCampos}>
+              <Text style={styles.buttonText}>Limpar</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={[styles.button, styles.dangerButton]} onPress={apagarTudo}>
+            <Text style={styles.buttonText}>Apagar Todos</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.limparButton]} onPress={limparFormulario}>
-            <Text style={styles.buttonText}>Limpar</Text>
-          </TouchableOpacity>
-        </View>
+
+          <Text style={styles.listTitle}>Usuários Cadastrados:</Text>
+          {listaUsuarios.map(renderUsuario)}
+        </ScrollView>
+        <StatusBar style="auto" />
       </View>
-
-      <Text style={styles.listTitle}>Usuários Cadastrados:</Text>
-      <FlatList
-        data={listaUsuarios}
-        keyExtractor={item => item.codigo}
-        renderItem={renderItem}
-        style={styles.list}
-      />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#f0f0f0',
   },
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    paddingTop: 40,
+  },
+  scrollView: {
+    paddingHorizontal: 20,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
-    marginTop: 40,
+    marginBottom: 25,
+    color: '#333',
   },
   formContainer: {
     marginBottom: 20,
   },
+  inputGroup: {
+    marginBottom: 15,
+  },
   label: {
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 8,
+    color: '#555',
+  },
+  inputWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  icon: {
+    padding: 10,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-    backgroundColor: '#fff',
+    flex: 1,
+    height: 50,
+    paddingRight: 15,
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   button: {
     flex: 1,
-    backgroundColor: '#007bff',
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5,
   },
@@ -231,16 +298,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  limparButton: {
+  primaryButton: {
+    backgroundColor: '#007bff',
+  },
+  secondaryButton: {
     backgroundColor: '#6c757d',
   },
-  listTitle: {
-    fontSize: 18,
-    fontWeight: 'bold', 
-    marginBottom: 10,
+  dangerButton: {
+    backgroundColor: '#dc3545',
+    alignSelf: 'center',
+    width: '100%',
+    marginVertical: 5,
   },
-  list: {
-    flex: 1,
+  listTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 15,
+    color: '#333',
   },
   listItem: {
     flexDirection: 'row',
@@ -249,21 +324,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 15,
     marginBottom: 10,
-    borderRadius: 5,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
+  },
+  usuarioInfo: {
+    flex: 1,
   },
   itemText: {
     fontSize: 16,
+    color: '#333',
   },
   itemButtons: {
     flexDirection: 'row',
-  },
-  itemButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 5,
-    marginHorizontal: 5,
   },
   editButton: {
     backgroundColor: '#ffc107',
