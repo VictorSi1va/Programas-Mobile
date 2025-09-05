@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   listTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: 'bold', 
     marginBottom: 10,
   },
   list: {
