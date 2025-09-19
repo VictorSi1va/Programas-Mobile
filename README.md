@@ -11,19 +11,33 @@ Este é um portfólio de projetos de desenvolvimento mobile criados durante o me
 ## ▶️ Como Rodar os Projetos
 Para executar qualquer projeto deste repositório, siga estes passos no seu terminal:
 
-1.  **Acesse a pasta do projeto.** Use o comando `cd` para entrar no diretório da atividade que você quer rodar.
+0.  **Instale o Expo na máquina.** Use o comando `cd` para entrar no diretório da atividade que você quer rodar.
+    
+    O comando abaixo é necessário apenas 1 vez.
+    ```bash
+    Npm install expo-cli -g
+    ```
+
+1.  **Crie o template da atividade.** Use o comando `cd` para entrar no diretório da atividade que você quer rodar.
+    
+    Execute no prompt de comando  dentro da pasta onde deseja criar sua aplicação:
+    ```bash
+    npx create-expo-app --template
+    ```
+
+2.  **Acesse a pasta do projeto.** Use o comando `cd` para entrar no diretório da atividade que você quer rodar.
     
     Por exemplo, para o projeto de cadastro de usuário:
     ```bash
     cd CadastroUsuario/081210012-CadUser
     ```
 
-2.  **Instale as dependências.** Este comando baixa todos os pacotes necessários para o projeto funcionar.
+3.  **Instale as dependências.** Este comando baixa todos os pacotes necessários para o projeto funcionar.
     ```bash
     npm install
     ```
 
-3.  **Inicie o servidor de desenvolvimento.**
+4.  **Inicie o servidor de desenvolvimento.**
     ```bash
     npx expo start
     ```
