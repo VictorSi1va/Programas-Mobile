@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, View, StyleSheet, Alert } from 'react-native';
 import * as DB from './dbservice';
 import TelaTemas from './screens/TelaTemas';
 import TelaPerguntas from './screens/TelaPerguntas';
@@ -10,6 +10,21 @@ import TelaJogar from './screens/TelaJogar';
 const Stack = createStackNavigator();
 
 function HomeScreen({ navigation }) {
+  const resetarBanco = async () => {
+    const db = await DB.getDbConnection();
+    // apaga tabelas
+    await db.execAsync(`
+      DROP TABLE IF EXISTS perguntas;
+      DROP TABLE IF EXISTS temas;
+    `);
+    // recria
+    await DB.createTables();
+    await DB.popularDadosIniciais();
+    await db.closeAsync();
+
+    Alert.alert("Sucesso", "Banco resetado e repopulado!");
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Bem-vindo ao Quiz!</Text>
@@ -24,6 +39,11 @@ function HomeScreen({ navigation }) {
 
       <TouchableOpacity style={styles.btn} onPress={() => navigation.navigate('Jogar')}>
         <Text style={styles.btnText}>Jogar Quiz</Text>
+      </TouchableOpacity>
+
+      {/* 👇 novo botão para reset */}
+      <TouchableOpacity style={[styles.btn, { backgroundColor: 'red' }]} onPress={resetarBanco}>
+        <Text style={styles.btnText}>Resetar Banco</Text>
       </TouchableOpacity>
     </View>
   );
